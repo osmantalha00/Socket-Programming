@@ -59,12 +59,14 @@ class ServerListener extends Thread{
     
     @Override
     public void run() {
-        while (!this.client.socket.isClosed()) {            
+        while (this.client.socket.isConnected()) {            
             try {
                 Sender keepMessage = (Sender) (this.client.sInput.readObject());
                 
                 switch (keepMessage.type) {
-                    
+                    case ClientSetName:
+                        login_menu.mainFrame.setClientName(keepMessage.message.toString());
+                        break;
                     default:
                         throw new AssertionError();
                 }

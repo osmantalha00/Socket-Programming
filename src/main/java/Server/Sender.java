@@ -8,9 +8,9 @@ package Server;
  *
  * @author MONSTER
  */
-public class Sender {
+public class Sender implements java.io.Serializable{
     public static enum SenderMessage{
-        
+        ClientSetName
     }
     
     public SenderMessage type;

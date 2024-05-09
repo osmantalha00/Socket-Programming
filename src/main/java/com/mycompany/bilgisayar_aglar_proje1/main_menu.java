@@ -13,6 +13,7 @@ public class main_menu extends javax.swing.JFrame {
     /**
      * Creates new form main_menu
      */
+    String clientName;
     public main_menu() {
         initComponents();
     }
@@ -37,6 +38,11 @@ public class main_menu extends javax.swing.JFrame {
         jLabel1.setText("MAIN MENU");
 
         jButton1.setText("USERS");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
 
         jButton2.setText("ROOMS");
 
@@ -81,6 +87,14 @@ public class main_menu extends javax.swing.JFrame {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        System.out.println(clientName);
+    }//GEN-LAST:event_jButton1ActionPerformed
+
+    public void setClientName(String clientName) {
+        this.clientName = clientName;
+    }
 
     /**
      * @param args the command line arguments

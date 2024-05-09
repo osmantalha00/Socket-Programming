@@ -55,11 +55,16 @@ class ClientListener extends Thread{
 
     @Override
     public void run() {
-        while (!this.client.socket.isClosed()) {            
+        while (this.client.socket.isConnected()) {            
             try {
                 Sender keep = (Sender) this.client.sInput.readObject();
                 switch (keep.type) {
-                    
+                    case ClientSetName:
+                        this.client.userName = keep.message.toString();
+                        Sender respond = new Sender(Sender.SenderMessage.ClientSetName);
+                        respond.message = this.client.userName;
+                        client.sendMessage(respond);
+                        break;
                     default:
                         throw new AssertionError();
                 }
