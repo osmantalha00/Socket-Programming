@@ -1,64 +1,80 @@
 /*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
  */
 package Server;
 
+import Message.Message;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.concurrent.Semaphore;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import Server.Room;
+import Ekranlar.Login;
+import javax.swing.JOptionPane;
 
-/**
- *
- * @author MONSTER
- */
 public class Server {
-    public ServerSocket socket;
-    public int port;
-    public ServerListener serverListener;
-    
-    public static ArrayList<SClient> clients;
-    public static ArrayList<Room> rooms;
-    
-    public Server(int port)
-    {
+
+    public static int port;
+    public static int clientID = 0;
+    public static ServerSocket socket;
+    public static SListenThread listenThread;
+    public static ArrayList<SClient> sclients = new ArrayList();
+    public static ArrayList<Room> rooms = new ArrayList();
+    public static Semaphore pairingSemp = new Semaphore(1, true);
+
+    public static void StartServer(int port) {
         try {
-            this.port = port;
-            this.socket = new ServerSocket(this.port);
-            this.serverListener = new ServerListener(this);
-            this.clients = new ArrayList<SClient>();
-            this.rooms = new ArrayList<Room>();
-            this.serverListener.start();
+            Server.port = port;
+            Server.socket = new ServerSocket(Server.port);
+            Server.listenThread = new SListenThread();
+            Server.listenThread.start();
         } catch (IOException ex) {
             Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-}
 
-class ServerListener extends Thread{
-    
-    private Server server;
-    
-    public ServerListener(Server server)
-    {
-        this.server = server;
+    public static void SendClient(SClient cl, Message msg) {
+        try {
+            cl.sOutput.writeObject(msg);
+        } catch (IOException ex) {
+            Logger.getLogger(SClient.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
-    @Override
-    public void run() {
-        while (!this.server.socket.isClosed()) {            
+    // Server sends broadcast message to all clients 
+    public static void SendClient2(Message msg) {
+        for (SClient sclient : sclients) {
             try {
-                Socket socket = this.server.socket.accept();
-                SClient client = new SClient(socket);
-                this.server.clients.add(client);
+                sclient.sOutput.writeObject(msg);
             } catch (IOException ex) {
-                Logger.getLogger(ServerListener.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(SClient.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }
-    
-    
+}
+
+class SListenThread extends Thread {
+
+    @Override
+    public void run() {
+        while (!Server.socket.isClosed()) {
+            try {
+                System.out.println("Listeningg...and client waiting....");
+                Socket newSocket = Server.socket.accept();
+                System.out.println("Client came....");
+                SClient newSClient = new SClient(Server.clientID, newSocket);
+                Server.clientID++;
+                Server.sclients.add(newSClient);
+                newSClient.listenThread.start();
+            } catch (IOException ex) {
+                Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
+
 }

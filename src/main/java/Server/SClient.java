@@ -1,78 +1,200 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package Server;
 
+import Message.Message;
+import Message.Message.Message_Type;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import Server.Room;
+import Ekranlar.Login;
+import javax.swing.JOptionPane;
 
-/**
- *
- * @author MONSTER
- */
-public class SClient {
-    public Socket socket;
-    public ObjectInputStream sInput;
-    public ObjectOutputStream sOutput;
-    public ClientListener listener;
-    public String userName;
-    
-    public SClient(Socket socket)
-    {
+public class SClient implements java.io.Serializable {
+
+    int clientID;
+    Socket socket;
+    public String name = "NoName";
+    ObjectOutputStream sOutput;
+    ObjectInputStream sInput;
+    // dinleme threadi
+    Listen listenThread;
+
+    public SClient(int clientID, Socket socket) {
         try {
             this.socket = socket;
+            this.clientID = clientID;
+            this.listenThread = new Listen(this);
+            //this.pairThread = new PairingThread(this);
             this.sOutput = new ObjectOutputStream(this.socket.getOutputStream());
             this.sInput = new ObjectInputStream(this.socket.getInputStream());
-            this.listener = new ClientListener(this);
-            this.listener.start();
         } catch (IOException ex) {
             Logger.getLogger(SClient.class.getName()).log(Level.SEVERE, null, ex);
         }
+
     }
-    
-    public void sendMessage(Object msg)
-    {
+
+    //client mesaj gönderme
+    public void Send(Message message) {
         try {
-            this.sOutput.writeObject(msg);
+            this.sOutput.writeObject(message);
         } catch (IOException ex) {
             Logger.getLogger(SClient.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-}
 
-class ClientListener extends Thread{
-    SClient client;
-    
-    public ClientListener(SClient client)
-    {
-        this.client = client;
+    public void Disconnect() {
+        try {
+            this.socket.close();
+        } catch (IOException ex) {
+            Logger.getLogger(SClient.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
-    @Override
-    public void run() {
-        while (this.client.socket.isConnected()) {            
-            try {
-                Sender keep = (Sender) this.client.sInput.readObject();
-                switch (keep.type) {
-                    case ClientSetName:
-                        this.client.userName = keep.message.toString();
-                        Sender respond = new Sender(Sender.SenderMessage.ClientSetName);
-                        respond.message = this.client.userName;
-                        client.sendMessage(respond);
-                        break;
-                    default:
-                        throw new AssertionError();
+    public class Listen extends Thread implements java.io.Serializable {
+
+        SClient sclient;
+
+        public Listen(SClient sclient) {
+            this.sclient = sclient;
+        }
+
+        @Override
+        public void run() {
+            while (sclient.socket.isConnected()) {
+                try {
+                    Message msg = (Message) sclient.sInput.readObject();
+                    switch (msg.type) {
+                        case NAME:
+                            System.out.println("gelen name mesajı: " + msg.content.toString());
+                            sclient.name = msg.content.toString();
+                            break;
+                        case ROOM_NAME:
+                            System.out.println("gelen room name mesajı: " + msg.content.toString());
+                            Room newRoom = new Room(msg.content.toString(), sclient.name);
+                            Server.rooms.add(newRoom);
+                            Message roomMSG = new Message(Message.Message_Type.ROOM_NAME);
+                            roomMSG.content = newRoom.name;
+                            Server.SendClient(this.sclient, roomMSG);
+                            break;
+                        case LIST:
+                            ArrayList<String> usernames = new ArrayList<String>();
+                            for (SClient item : Server.sclients) {
+                                usernames.add(item.name);
+                            }
+                            Message mesaj = new Message(Message_Type.LIST);
+                            mesaj.content = usernames;
+                            Server.SendClient(this.sclient, mesaj);
+                            break;
+                        case ROOM_LIST:
+                            ArrayList<String> roomNames = new ArrayList<String>();
+                            for (Room item : Server.rooms) {
+                                roomNames.add(item.name);
+                            }
+                            Message roomListMsg = new Message(Message_Type.ROOM_LIST);
+                            roomListMsg.content = roomNames;
+                            Server.SendClient(this.sclient, roomListMsg);
+                            break;
+                        case JOIN_ROOM:
+                            // msg.content == choosen room name from list
+                            // searching a room in server, so if it is exist then enter a room
+                            // and add this sclient to rooms user list
+                            String tempRoomName = "NO";
+                            for (Room item : Server.rooms) {
+                                if (item.name.equals(msg.content)) {
+                                    tempRoomName = item.name;
+                                    item.userNamesList.add(this.sclient.name);
+                                    break;
+                                }
+                            }
+                            Message roomNameMSG = new Message(Message.Message_Type.JOIN_ROOM);
+                            roomNameMSG.content = tempRoomName;
+                            Server.SendClient(this.sclient, roomNameMSG);
+                            break;
+                        case REFRESH:
+                            // msg.content == room name
+                            ArrayList<String> clientNames = new ArrayList();
+                            for (Room room : Server.rooms) {
+                                if (room.name.equals(msg.content.toString())) {
+                                    for (String client : room.userNamesList) {
+                                        clientNames.add(client);
+                                    }
+                                }
+                            }
+                            Message clientsMSG = new Message(Message_Type.REFRESH);
+                            clientsMSG.content = clientNames;
+                            Server.SendClient(this.sclient, clientsMSG);
+                            break;
+                        case START_CHAT:
+                            // msg.content == selected client name from list to chat
+                            Message decideMSG = new Message(Message.Message_Type.START_CHAT);
+                            decideMSG.content = (String) "DECIDE";
+                            decideMSG.whoWantsToTalk = msg.senderName;
+                            for (SClient sclient : Server.sclients) {
+                                if (sclient.name.equals(msg.content)) {
+                                    Server.SendClient(sclient, decideMSG);
+                                    break;
+                                }
+                            }
+                            break;
+                        case DECIDE:
+                            // msg.content == selection ---> YES = 0, NO = 1
+                            if (msg.content.equals(0)) {
+                                Message finish = new Message(Message.Message_Type.DECIDE_FINISH);
+                                finish.content = "OPEN";
+                                finish.senderName = msg.senderName;
+                                finish.whoWantsToTalk = msg.whoWantsToTalk;
+                                for (SClient item : Server.sclients) {
+                                    if (item.name.equals(msg.whoWantsToTalk)) {
+                                        Server.SendClient(item, finish);
+                                        break;
+                                    }
+                                }  
+                            }              
+                            break;     
+                        case P2P_TEXT:
+                            // msg.content == sended message 
+                            Message textMSG = new Message(Message.Message_Type.P2P_TEXT);
+                            textMSG.content = this.sclient.name.toUpperCase() + ": " + msg.content;
+                            Server.SendClient2(textMSG);
+                            break;
+                        case P2P_FILE:
+                            // msg.content == file name
+                            Server.SendClient2(msg);
+                            break;
+                        case P2P_FILE_NOTIFY:
+                            // msg.content == filename + shared..
+                            Server.SendClient2(msg);
+                            break;
+                        case TEXT:
+                            // msg.content == sended message to room 
+                            Message chatMSG = new Message(Message.Message_Type.TEXT);
+                            chatMSG.content = this.sclient.name.toUpperCase() + ": " + msg.content;
+                            Server.SendClient2(chatMSG);
+                            break;
+                        case ROOM_FILE:
+                            // msg.content == file name
+                            Server.SendClient2(msg);
+                            break;
+                        case ROOM_FILE_NOTIFY:
+                            // msg.content == filename + shared..
+                            Server.SendClient2(msg);
+                            break;
+                    }
+                } catch (IOException ex) {
+                    this.sclient.Disconnect();
+                    System.out.println("Listen Thread Exceptionnn: " + ex);
+                    return;
+                } catch (ClassNotFoundException ex) {
+                    System.out.println("Class Not Foundddd: " + ex);;
+                } catch (IllegalThreadStateException te) {
+                    System.out.println("Illegal Threaddd: " + te);
                 }
-            } catch (IOException ex) {
-                Logger.getLogger(ClientListener.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (ClassNotFoundException ex) {
-                Logger.getLogger(ClientListener.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
+
     }
 }

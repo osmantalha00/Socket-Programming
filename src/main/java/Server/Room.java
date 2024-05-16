@@ -11,13 +11,14 @@ import java.util.ArrayList;
  * @author MONSTER
  */
 public class Room {
-    public String name;
-    public ArrayList<String> usersNames;
     
-    public Room(String name, String roomOwnerName)
-    {
-        usersNames = new ArrayList<String>();
+    public String name;
+    public ArrayList<String> userNamesList = new ArrayList();
+    
+    public Room(String name, String creatorName){
         this.name = name;
-        this.usersNames.add(roomOwnerName);
+        userNamesList.add(creatorName);
     }
+    
+    
 }

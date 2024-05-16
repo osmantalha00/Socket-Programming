@@ -13,6 +13,7 @@ public class Starter extends javax.swing.JFrame {
     /**
      * Creates new form Starter
      */
+    Server server;
     public Starter() {
         initComponents();
     }
@@ -58,7 +59,9 @@ public class Starter extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        Server server = new Server(5000);
+       server = new Server();
+       server.StartServer(5000);
+       
     }//GEN-LAST:event_jButton1ActionPerformed
 
     /**
