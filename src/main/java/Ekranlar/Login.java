@@ -103,7 +103,8 @@ public class Login extends javax.swing.JFrame {
             System.out.println("FAIL!");
         } else {
             // Client servera baglanıyor
-            Client.StartClient("localhost", 5000);
+            Client.StartClient("13.48.44.132", 5000);
+            // Client.StartClient("localhost", 5000);
             if (Client.socket == null) {
                 JOptionPane.showMessageDialog(this, "Connection Failed !!");
                 System.exit(0);

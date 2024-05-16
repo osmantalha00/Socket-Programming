@@ -4,6 +4,15 @@
  */
 package Ekranlar;
 
+import Client.Client;
+import Message.Message;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import javax.swing.JFileChooser;
+
 /**
  *
  * @author MONSTER
@@ -92,18 +101,47 @@ public class P2PChat extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void p2p_sendActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_p2p_sendActionPerformed
-        // TODO add your handling code here:
+        if (p2p_chatText.getText() != null) {
+            Message msg = new Message(Message.Message_Type.P2P_TEXT);
+            msg.content = p2p_chatText.getText();
+            Client.SendServer(msg);
+        }
+        p2p_chatText.setText("");
     }//GEN-LAST:event_p2p_sendActionPerformed
 
     private void p2p_sendDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_p2p_sendDocumentActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_p2p_sendDocumentActionPerformed
+       JFileChooser fileChooser = new JFileChooser();
+        int selection = fileChooser.showOpenDialog(this);
+        
+        File file = null;
+        // keep selected file from chooser in file variable
+        if (selection == JFileChooser.APPROVE_OPTION)
+            file = fileChooser.getSelectedFile();
+        
+        byte fileContent[] = new byte[(int)file.length()];
+        try {
+            BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
+            bis.read(fileContent, 0, fileContent.length);
+            Message fileMSG = new Message(Message.Message_Type.P2P_FILE);
+            fileMSG.fileContent = fileContent;
+            fileMSG.content = file.getName(); // msg.content == file name
+            Client.SendServer(fileMSG);
+            System.out.println("Sended file path: "+file.getAbsolutePath());
+            
+            // notifying to message sended by who
+            String sender = Login.menu.jLabel1.getText().substring(3, Login.menu.jLabel1.getText().length()-1);
+            Message notifyFileMSG = new Message(Message.Message_Type.P2P_FILE_NOTIFY);
+            notifyFileMSG.content = sender.toUpperCase() + ": " + file.getName() + " shared";
+            Client.SendServer(notifyFileMSG);
+            
+        } catch (FileNotFoundException ex) {
+            System.out.println("File not found.. "+ex);
+        } catch (IOException ex) {
+            System.out.println("File read exception.."+ex);
+        }   
+    }                                            
 
-    /**
-     * @param args the command line arguments
-     */
     public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
         /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
          * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
@@ -125,15 +163,18 @@ public class P2PChat extends javax.swing.JFrame {
             java.util.logging.Logger.getLogger(P2PChat.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
-        //</editor-fold>
 
-        /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 new P2PChat().setVisible(true);
             }
         });
-    }
+    }//GEN-LAST:event_p2p_sendDocumentActionPerformed
+
+    /**
+     * @param args the command line arguments
+     */
+ 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel jLabel1;

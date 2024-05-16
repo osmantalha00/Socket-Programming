@@ -23,6 +23,9 @@ public class Menu extends javax.swing.JFrame {
     /**
      * Creates new form roomchat
      */
+    String userName;
+    Client client;
+
     public Menu() {
         initComponents();
         menu_list.setModel(dlm);
@@ -196,13 +199,15 @@ public class Menu extends javax.swing.JFrame {
     }//GEN-LAST:event_menu_startChatActionPerformed
 
     private void menu_showClientsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menu_showClientsActionPerformed
-        System.out.println("SHOW CLIENTS BUTTON GIRDIMM");
+         System.out.println("SHOW CLIENTS BUTTON GIRDIMM");
         Message msg = new Message(Message.Message_Type.LIST);
         Client.SendServer(msg);
+    
+
     }//GEN-LAST:event_menu_showClientsActionPerformed
 
     private void menu_showRoomsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menu_showRoomsActionPerformed
-        Message msg = new Message(Message.Message_Type.ROOM_LIST);
+        Message msg = new Message(Message.Message_Type.PROJE_LIST);
         Client.SendServer(msg);
     }//GEN-LAST:event_menu_showRoomsActionPerformed
 
@@ -211,7 +216,7 @@ public class Menu extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Please enter a room name before creation !!");
             return;
         }
-        Message msg = new Message(Message.Message_Type.ROOM_NAME);
+        Message msg = new Message(Message.Message_Type.PROJE_NAME);
         msg.content = menu_createTxt.getText();
         Client.SendServer(msg);
     }//GEN-LAST:event_menu_createActionPerformed

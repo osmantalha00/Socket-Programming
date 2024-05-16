@@ -22,6 +22,7 @@ public class Client implements java.io.Serializable {
     public static ObjectOutputStream sOutput;
     public static boolean isPaired = false;
     public static ListenThread listen;
+    public static String clientName; // yeni ekledim son 
 
     public static void StartClient(String ip, int port) {
         try {
@@ -32,9 +33,6 @@ public class Client implements java.io.Serializable {
             Client.sOutput = new ObjectOutputStream(Client.socket.getOutputStream());
             Client.listen.start();
 
-            //Message msg = new Message(Message.Message_Type.Name);
-            //msg.content = Login.nameTxt.getText();
-            //Client.Send(msg);
         } catch (IOException ex) {
             Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -78,12 +76,13 @@ class ListenThread extends Thread implements java.io.Serializable {
                 switch (msg.type) {
                     case NAME:
                         break;
-                    case ROOM_NAME:
-                        // msg.content == newRoom.name
+                    case PROJE_NAME: // // Gelen proje adını büyük harflerle görüntüleyerek chat penceresini göster
+
                         Login.menu.chat.roomlbl.setText(msg.content.toString().toUpperCase());
                         Login.menu.chat.setVisible(true);
                         break;
-                    case LIST:
+                    case LIST: //  Liste mesajı alındığında, mevcut liste elemanlarını temizle ve 
+                               // ve yeni elemanları ekle
                         Login.menu.dlm.removeAllElements();
                         ArrayList<String> receivedNames = new ArrayList();
                         receivedNames = (ArrayList<String>) msg.content;
@@ -91,7 +90,9 @@ class ListenThread extends Thread implements java.io.Serializable {
                             Login.menu.dlm.addElement(item);
                         }
                         break;
-                    case ROOM_LIST:
+                    case PROJE_LIST:
+                        // // Proje listesi mesajı alındığında,
+                        // mevcut liste elemanlarını temizle ve yeni elemanları ekle
                         Login.menu.dlm2.removeAllElements();
                         ArrayList<String> receivedRooms = new ArrayList();
                         receivedRooms = (ArrayList<String>) msg.content;
@@ -100,6 +101,8 @@ class ListenThread extends Thread implements java.io.Serializable {
                         }
                         break;
                     case JOIN_ROOM:
+                        // // Odaya katılma mesajı alındığında, eğer katılım başarısız ise hata mesajı göster
+                         // Başarılı ise oda adını büyük harflerle görüntüleyerek chat penceresini göste
                         // msg.content == temp (NO or room name)
                         if (msg.content.equals("NO")) {
                             JOptionPane.showMessageDialog(Login.menu, "Room name Failure!!");
@@ -108,7 +111,8 @@ class ListenThread extends Thread implements java.io.Serializable {
                         Login.menu.chat.roomlbl.setText(msg.content.toString().toUpperCase());
                         Login.menu.chat.setVisible(true);
                         break;
-                    case REFRESH:
+                    case ReLoad:
+                        // // Yeniden yükleme mesajı alındığında, mevcut liste elemanlarını temizle ve yeni elemanları ekle
                         Login.menu.chat.dlm.removeAllElements();
                         ArrayList<String> roomsClients = new ArrayList();
                         roomsClients = (ArrayList<String>) msg.content;
@@ -128,32 +132,32 @@ class ListenThread extends Thread implements java.io.Serializable {
                         if (selection == JOptionPane.YES_OPTION) {
                             Login.menu.singleChat.setTitle(msg.whoWantsToTalk.toUpperCase());
                             Login.menu.singleChat.setVisible(true);
-                            //  to notify the client is he/she accept to chat request ?
-                            Message decide = new Message(Message.Message_Type.DECIDE);
+
+                            Message decide = new Message(Message.Message_Type.SELECTION);
                             decide.content = selection; // if option is yes selection equals 0, if it is not then selection eq 1
                             decide.senderName = Login.menu.jLabel1.getText().substring(3, Login.menu.jLabel1.getText().length() - 1);
                             decide.whoWantsToTalk = msg.whoWantsToTalk;
                             Client.SendServer(decide);
                         }
 
-                        
                         break;
-                    case DECIDE_FINISH:
+                    case SELECTION_FINISH:
+                        // // SELECTION_FINISH mesajı alındığında, eğer içerik "OPEN" ise istemci sohbeti kabul etmiş demektir
                         // if msg.content open, so it means client accept to chat
                         if (msg.content.equals("OPEN")) {
                             Login.menu.singleChat.setTitle(msg.senderName.toUpperCase());
-                            Login.menu.singleChat.setVisible(true);  
+                            Login.menu.singleChat.setVisible(true);
                         }
                         break;
                     case P2P_TEXT:
                         Login.menu.singleChat.p2p_textArea.append(msg.content.toString() + "\n");
                         break;
                     case P2P_FILE:
-                        // msg.content == file name
+//                   // P2P_FILE mesajı alındığında, gelen dosyayı kullanıcının masaüstüne kaydet
                         String homePath = System.getProperty("user.home");
                         File receivedFile = new File(homePath + "/Desktop/" + msg.content);
                         OutputStream os = new FileOutputStream(receivedFile);
-                        byte content[] = (byte[])msg.fileContent;
+                        byte content[] = (byte[]) msg.fileContent;
                         os.write(content);
                         break;
                     case P2P_FILE_NOTIFY:
@@ -162,15 +166,15 @@ class ListenThread extends Thread implements java.io.Serializable {
                     case TEXT:
                         Login.menu.chat.Chat_textArea.append(msg.content.toString() + "\n");
                         break;
-                    case ROOM_FILE:
-                        // msg.content == file name
+                    case RECEIVED_ROOM_FILE:
+                        // // Odadan alınan dosyayı kullanıcının masaüstüne kaydet
                         String homePath1 = System.getProperty("user.home");
                         File receivedFile1 = new File(homePath1 + "/Desktop/" + msg.content);
                         OutputStream os1 = new FileOutputStream(receivedFile1);
-                        byte content1[] = (byte[])msg.fileContent;
+                        byte content1[] = (byte[]) msg.fileContent;
                         os1.write(content1);
                         break;
-                    case ROOM_FILE_NOTIFY:
+                    case ROOM_FILE_RECEIVED_NOTIFICATION:
                         Login.menu.chat.Chat_textArea.append(msg.content.toString() + "\n");
                         break;
                 }

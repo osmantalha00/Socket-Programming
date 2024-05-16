@@ -3,9 +3,9 @@ package Message;
 public class Message implements java.io.Serializable {
 
     public static enum Message_Type {
-        NAME, ROOM_NAME, ROOM_LIST, LIST,                                       // MENU MESSAGE TYPES
-        JOIN_ROOM, REFRESH, TEXT,  ROOM_FILE, ROOM_FILE_NOTIFY,                 // ROOM MESSAGE TYPES
-        START_CHAT, DECIDE, DECIDE_FINISH, P2P_TEXT, P2P_FILE, P2P_FILE_NOTIFY, // P2P MESSAGE TYPES 
+        NAME, PROJE_NAME, PROJE_LIST, LIST,                                       // MENU MESSAGE TYPES
+        JOIN_ROOM, ReLoad, TEXT,  RECEIVED_ROOM_FILE, ROOM_FILE_RECEIVED_NOTIFICATION,                 // ROOM MESSAGE TYPES
+        START_CHAT, SELECTION, SELECTION_FINISH, P2P_TEXT, P2P_FILE, P2P_FILE_NOTIFY, // P2P MESSAGE TYPES 
     }
 
     // type of message

@@ -27,6 +27,7 @@ public class Chat extends javax.swing.JFrame {
      */
     public Chat() {
         initComponents();
+        chat_clientList.setModel(dlm);
     }
 
     /**
@@ -139,8 +140,8 @@ public class Chat extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void chat_refreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chat_refreshActionPerformed
-        System.out.println("refresh clickeddd");
-        Message refreshMessage = new Message(Message.Message_Type.REFRESH);
+        
+        Message refreshMessage = new Message(Message.Message_Type.ReLoad);
         refreshMessage.content = roomlbl.getText().toLowerCase();
         System.out.println("refresh message.content : " + refreshMessage.content);
         Client.SendServer(refreshMessage);
@@ -168,7 +169,7 @@ public class Chat extends javax.swing.JFrame {
         try {
             BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
             bis.read(fileContent, 0, fileContent.length);
-            Message fileMSG = new Message(Message.Message_Type.ROOM_FILE);
+            Message fileMSG = new Message(Message.Message_Type.RECEIVED_ROOM_FILE);
             fileMSG.fileContent = fileContent;
             fileMSG.content = file.getName(); // msg.content == file name
             Client.SendServer(fileMSG);
@@ -176,7 +177,7 @@ public class Chat extends javax.swing.JFrame {
             
             // notifying to message sended by who
             String sender = Login.menu.jLabel1.getText().substring(3, Login.menu.jLabel1.getText().length()-1);
-            Message notifyFileMSG = new Message(Message.Message_Type.ROOM_FILE_NOTIFY);
+            Message notifyFileMSG = new Message(Message.Message_Type.ROOM_FILE_RECEIVED_NOTIFICATION);
             notifyFileMSG.content = sender.toUpperCase() + ": " + file.getName() + " shared";
             Client.SendServer(notifyFileMSG);
             
